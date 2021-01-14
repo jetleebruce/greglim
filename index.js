@@ -11,6 +11,10 @@ const bodyParser = require("body-parser");
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+const fileUpload = require("express-fileupload");
+app.use(fileUpload());
+
+
 app.set("view engine", "ejs");
 
 mongoose.connect("mongodb://localhost/my_database", { useNewUrlParser: true });
@@ -45,11 +49,14 @@ app.get("/create", (req, res) => {
   res.render("create");
 });
 
-app.post("/posts/store", async (req, res) => {
-  // model creates a new doc with browser data
-  await BlogPost.create(req.body);
-  res.redirect("/");
+app.post("/posts/store", (req, res) => {
+  let image = req.files.image;
+  image.mv(path.resolve(__dirname, "public/img", image.name), async (error) => {
+    await BlogPost.create({...req.body, image:"/img/" + image.name})
+     res.redirect('/')
+  })
 });
+
 
 app.listen(4000, () => {
   console.log("App listening on port 4000");
